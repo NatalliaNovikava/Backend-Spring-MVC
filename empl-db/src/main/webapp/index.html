@@ -1,0 +1,112 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css"href="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/redmond/jquery-ui.css" />
+	
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
+	<style>
+		table {
+			border-collapse: collapse;
+		}
+		table, th, td {
+			border: 1px solid black;
+		}
+		thead {
+			font-weight: bold;
+		}
+	</style>
+</head>
+
+<body>
+	<form id="newEmployeeForm" action="javascript:void(null)" onsubmit="javascript:addEmployee()">
+		<table>
+			<tr>
+				<td><label for="firstName">First name:</label><td><input type="text" id="firstName" name="firstName"/>
+				<td><label for="lastName">Last name:</label><td><input type="text" id="lastName=" name="lastName"/>
+			</tr>
+			<tr>
+				<td><label for="hireDate">Hire date:</label><td><input type="text" id="hireDate" name="hireDate"/>
+				<td><label for="gender">Gender:</label><td><input type="text" id="gender" name="gender"/>
+			</tr>
+			<tr>
+				<td><label for="position">Position:</label><td><input type="text" id="position" name="position"/>
+				<td><label for="salary">Salary:</label><td><input type="number" id="salary" name="salary"/>
+			</tr>
+			<tr><td colspan="4" align="right"><input type="submit" value="Add employee"></tr>
+		</table>
+	</form>
+
+	<form id="findEmployeeForm" action="javascript:void(null)" onsubmit="javascript:findEmployee()">
+		<table>
+			<tr>
+				<td><label for="firstName">First name:</label><td><input type="text" id="firstName" name="firstName"/>
+				<td><label for="lastName">Last name:</label><td><input type="text" id="lastName=" name="lastName"/>
+				<td><input type="submit" value="Find employee">
+			</tr>
+		</table>
+	</form>
+
+	<table id="employeeList">
+		<thead>
+			<tr><td>First name<td>Last name<td>Hire date<td>Gender<td>Position<td>Salary<td></tr>
+		</thead>
+		<tbody />
+	</table>
+</body>
+
+<script type="text/javascript">
+	$('#hireDate').datepicker({ dateFormat: 'yy-mm-dd' });
+
+	function fillEmployeesList(data) {
+		var tbody = $('<tbody/>');
+		for (employee of data) {
+			var row = $('<tr/>');
+			row.append($('<td/>').text(employee.firstName));
+			row.append($('<td/>').text(employee.lastName));
+			row.append($('<td/>').text(new Date(employee.hireDate).toISOString()));
+			row.append($('<td/>').text(employee.gender));
+			row.append($('<td/>').text(employee.position));
+			row.append($('<td/>').text(employee.salary));
+			var removeLink = $('<a/>').attr('href', 'javascript:deleteEmployee(' + employee.id + ')').text('[X]');
+			row.append($('<td/>').append(removeLink));
+			tbody.append(row);
+		}
+		$('#employeeList > tbody').replaceWith(tbody);
+	}
+
+	function reloadEmployeeList() {
+		$.get('employees', fillEmployeesList);
+	}
+
+	function deleteEmployee(id) {
+		$.ajax({
+			url: 'employees/' + id,
+			type: 'DELETE',
+			complete: reloadEmployeeList
+		});
+	}
+
+	function addEmployee() {
+		var data = $('#newEmployeeForm').serializeArray().reduce(function(a, x) { a[x.name] = x.value; return a; }, {});;
+		$.ajax({
+			url: 'employees',
+			type: 'PUT',
+			contentType: "application/json;charset=utf-8",
+			data: JSON.stringify(data),
+			complete: reloadEmployeeList
+		});
+	}
+
+	function findEmployee() {
+		$.ajax({
+			url: 'employees/search',
+			type: 'POST',
+			data: $('#findEmployeeForm').serialize(),
+			success: fillEmployeesList
+		});
+	}
+
+	reloadEmployeeList();
+</script>
+</html>
